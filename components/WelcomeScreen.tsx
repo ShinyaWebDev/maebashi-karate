@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface WelcomeScreenProps {
@@ -24,18 +23,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
         前橋高校空手部
       </h1>
       <h2 className="text-2xl md:text-3xl font-bold font-orbitron text-yellow-400 mb-6">
-        タイムカプセル
+        上毛かるたクイズ
       </h2>
       <p className="text-gray-300 mb-8 leading-relaxed">
-        20年の時を経て、AIが君の「今」を映し出す。
+        20年の時を経て、君の「群馬愛」が試される。
         <br />
-        名前を入力して、未来の自分に会いに行こう。
+        クイズに挑戦して、最高の押忍を決めろ！
       </p>
       <button
         onClick={onStart}
         className="w-full bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg hover:bg-yellow-400 focus:outline-none focus:ring-4 focus:ring-yellow-300/50 transition-all duration-300 ease-in-out transform hover:scale-105"
       >
-        押忍！始める
+        クイズ開始！
       </button>
     </div>
   );

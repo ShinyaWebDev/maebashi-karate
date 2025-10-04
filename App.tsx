@@ -1,54 +1,71 @@
-
-import React, { useState, useCallback } from 'react';
-import { Screen, UserData, GeneratedResult } from './types';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Screen, Question } from './types';
 import WelcomeScreen from './components/WelcomeScreen';
-import InputScreen from './components/InputScreen';
-import LoadingScreen from './components/LoadingScreen';
-import ResultCard from './components/ResultCard';
-import { generateBio, generateImage } from './services/geminiService';
+import QuizScreen from './components/QuizScreen';
+import ResultScreen from './components/ResultScreen';
+import { quizQuestions } from './data/karutaData';
+
+// Function to shuffle an array
+const shuffleArray = (array: any[]) => {
+  return [...array].sort(() => Math.random() - 0.5);
+}
 
 const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>(Screen.WELCOME);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [generatedResult, setGeneratedResult] = useState<GeneratedResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
+  // Memoize the shuffled questions so they don't re-shuffle on every render
+  const questions = useMemo(() => shuffleArray(quizQuestions), []);
+
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
 
   const handleStart = () => {
-    setScreen(Screen.INPUT);
-    setError(null);
-    setGeneratedResult(null);
+    setScore(0);
+    setCurrentQuestionIndex(0);
+    setIsAnswered(false);
+    setSelectedAnswer(null);
+    setScreen(Screen.QUIZ);
   };
 
-  const generateContent = useCallback(async (data: UserData) => {
-    try {
-      const [imageUrl, bio] = await Promise.all([
-        generateImage(data),
-        generateBio(data),
-      ]);
-      
-      setGeneratedResult({ imageUrl, bio });
-      setScreen(Screen.RESULT);
-    } catch (err) {
-      console.error(err);
-      setError('コンテンツの生成中にエラーが発生しました。もう一度お試しください。');
-      setScreen(Screen.INPUT);
+  const handleSelectAnswer = (answer: string) => {
+    if (isAnswered) return;
+
+    setIsAnswered(true);
+    setSelectedAnswer(answer);
+    if (answer === questions[currentQuestionIndex].correctAnswer) {
+      setScore(prevScore => prevScore + 1);
     }
-  }, []);
 
-  const handleSubmit = (data: UserData) => {
-    setUserData(data);
-    setScreen(Screen.LOADING);
-    generateContent(data);
+    setTimeout(() => {
+      const nextQuestion = currentQuestionIndex + 1;
+      if (nextQuestion < questions.length) {
+        setCurrentQuestionIndex(nextQuestion);
+        setIsAnswered(false);
+        setSelectedAnswer(null);
+      } else {
+        setScreen(Screen.RESULT);
+      }
+    }, 2500);
   };
-
+  
   const renderScreen = () => {
     switch (screen) {
-      case Screen.INPUT:
-        return <InputScreen onSubmit={handleSubmit} error={error} />;
-      case Screen.LOADING:
-        return <LoadingScreen />;
+      case Screen.QUIZ:
+        return (
+          <QuizScreen
+            question={questions[currentQuestionIndex]}
+            questionNumber={currentQuestionIndex + 1}
+            totalQuestions={questions.length}
+            onSelectAnswer={handleSelectAnswer}
+            isAnswered={isAnswered}
+            selectedAnswer={selectedAnswer}
+          />
+        );
       case Screen.RESULT:
-        return generatedResult && <ResultCard result={generatedResult} onReset={handleStart} />;
+        return <ResultScreen score={score} totalQuestions={questions.length} onRestart={handleStart} />;
       case Screen.WELCOME:
       default:
         return <WelcomeScreen onStart={handleStart} />;
